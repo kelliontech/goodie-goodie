@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goodie Goodie</title>
+    <style>
+        :root{
+            --accent:#2b8aee;
+            --muted:#6b7280;
+            --bg:#f7fbff;
+            --card:#ffffff;
+            --success:#16a34a;
+            font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        }
+        *{box-sizing:border-box}
+        body{margin:0;background-color:var(--bg);color:#111;min-height:100vh}
+        /* Background image with subtle overlay for readability */
+        body{background-image:linear-gradient(rgba(247,251,255,0.65),rgba(247,251,255,0.65)), url('https://images.unsplash.com/photo-1503602642458-232111445657?q=80&w=1600&auto=format&fit=crop');background-size:cover;background-position:center}
+        header{background:linear-gradient(90deg,var(--accent),#1e6fd8);color:#fff;padding:18px 20px;display:flex;align-items:center;justify-content:space-between}
+        header h1{margin:0;font-size:20px}
+        .brand{display:flex;align-items:center;gap:12px}
+        #logo{width:44px;height:44px;flex:0 0 44px}
+        .container{max-width:1100px;margin:24px auto;padding:0 16px}
+        .toolbar{display:flex;gap:12px;align-items:center}
+        .search{padding:8px 10px;border-radius:8px;border:1px solid rgba(0,0,0,0.08);min-width:220px}
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:18px}
+        .card{background:var(--card);Padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(14,30,37,0.06);display:flex;flex-direction:column}
+        .card img{width:100%;height:140px;object-fit:cover;border-radius:8px}
+        .card h3{margin:10px 0 6px;font-size:16px}
+        .meta{color:var(--muted);font-size:13px}
+        .price{margin-top:auto;font-weight:700;font-size:16px}
+        .btn{background:var(--accent);color:#fff;border:none;padding:8px 10px;border-radius:8px;cursor:pointer}
+        .btn.secondary{background:#fff;color:var(--accent);border:1px solid rgba(43,138,238,0.12)}
+        .cart-btn{position:relative}
+        .cart-count{position:absolute;top:-6px;right:-6px;background:#ff3b30;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:12px}
+        /* Cart sidebar */
+        .cart-sidebar{position:fixed;right:0;top:0;height:100%;width:360px;max-width:95%;background:linear-gradient(180deg,#fff,#f7faff);box-shadow:-12px 0 32px rgba(6,23,44,0.08);transform:translateX(110%);transition:transform .28s ease;z-index:60;padding:18px;overflow:auto}
+        .cart-sidebar.open{transform:translateX(0)}
+        .cart-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #eef2f7}
+        .cart-item img{width:64px;height:64px;object-fit:cover;border-radius:6px}
+        .qty{display:flex;align-items:center;gap:6px}
+        .small{font-size:13px;color:var(--muted)}
+        footer.checkout{margin-top:12px}
+        .field{display:flex;flex-direction:column;margin-bottom:8px}
+        .field input, .field textarea{padding:8px;border-radius:6px;border:1px solid #e6eefb}
+        .empty{padding:28px;text-align:center;color:var(--muted)}
+        @media (max-width:640px){
+            header h1{font-size:16px}
+            .toolbar{flex-direction:column;align-items:stretch}
+            .search{min-width:0;width:100%}
+            .toolbar .btn{width:100%;margin-left:0}
+            .grid{grid-template-columns:repeat(1,1fr);gap:12px}
+            .card img{height:180px}
+            .card{padding:14px}
+            .btn{padding:12px 14px;font-size:16px;border-radius:10px}
+            .cart-count{right:10px;top:-8px}
+            /* Make cart and admin sidebars slide up from bottom on small screens */
+            .cart-sidebar{left:0;right:0;bottom:0;top:auto;height:62%;width:100%;max-width:100%;transform:translateY(110%);box-shadow:0 -12px 36px rgba(6,23,44,0.12);border-top-left-radius:12px;border-top-right-radius:12px}
+            .cart-sidebar.open{transform:translateY(0)}
+            /* Admin sidebar (left drawer on desktop) becomes bottom drawer on mobile */
+            #adminSidebar{left:0;right:0;bottom:0;top:auto;height:62%;width:100%;max-width:100%;transform:translateY(110%);box-shadow:0 -12px 36px rgba(6,23,44,0.12);border-top-left-radius:12px;border-top-right-radius:12px}
+            #adminSidebar[aria-hidden="false"]{transform:translateY(0)}
+            /* Make inputs and touch targets more friendly */
+            input, textarea{font-size:15px}
+            .cart-item img{width:56px;height:56px}
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <svg id="logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Goodie Goodie logo">
+                <rect width="64" height="64" rx="12" fill="#2b8aee" />
+                <text x="50%" y="55%" font-size="34" text-anchor="middle" fill="#fff" font-family="Segoe UI, Roboto, Arial" font-weight="700">G</text>
+            </svg>
+            <h1>Goodie Goodie </h1>
+        </div>
+        <div class="toolbar">
+            <input id="search" class="search" placeholder="Search products..." />
+            <button id="openCart" class="btn cart-btn">Cart <span id="cartCount" class="cart-count" style="display:none">0</span></button>
+        </div>
+    </header>
+
+    <main class="container">
+        <section>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <h2 style="margin:0">Products</h2>
+                <p class="small">Orders will be sent to WhatsApp number: <strong>+256775157311</strong></p>
+            </div>
+            <div id="productGrid" class="grid" aria-live="polite"></div>
+        </section>
+    </main>
+
+    <aside id="cartSidebar" class="cart-sidebar" aria-hidden="true">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+            <h3 style="margin:0">Your Cart</h3>
+            <button id="closeCart" class="btn secondary">Close</button>
+        </div>
+        <div id="cartItems"></div>
+        <div id="cartEmpty" class="empty">Your cart is empty.</div>
+
+        <div style="margin-top:12px">
+            <div class="field">
+                <label class="small">Name</label>
+                <input id="customerName" placeholder="Your name" />
+            </div>
+            <div class="field">
+                <label class="small">Address / Delivery details</label>
+                <textarea id="customerAddress" rows="2" placeholder="Address, town, notes"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+                <div>
+                    <div class="small">Total</div>
+                    <div id="cartTotal" style="font-weight:700;font-size:18px">UGX 0</div>
+                </div>
+                <div style="min-width:160px">
+                    <button id="checkout" class="btn">Order via WhatsApp</button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Admin login modal -->
+    <div id="adminModal" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.45);align-items:center;justify-content:center;z-index:80">
+        <div style="background:#fff;padding:18px;border-radius:10px;max-width:420px;width:94%;box-shadow:0 12px 36px rgba(6,23,44,0.2)">
+            <h3 style="margin-top:0">Admin Login</h3>
+            <div class="field"><label class="small">Password</label><input id="adminPassword" type="password" placeholder="Enter admin password" /></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+                <button id="adminCancel" class="btn secondary">Cancel</button>
+                <button id="adminLogin" class="btn">Enter</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin sidebar -->
+    <aside id="adminSidebar" class="cart-sidebar" style="left:0;right:auto;transform:translateX(-110%);" aria-hidden="true">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+            <h3 style="margin:0">Admin Dashboard</h3>
+            <div>
+                <button id="adminLogout" class="btn secondary">Logout</button>
+                <button id="closeAdmin" class="btn secondary">Close</button>
+            </div>
+        </div>
+        <div style="margin-top:12px">
+            <h4 style="margin:8px 0 6px">Add Product</h4>
+            <div class="field"><label class="small">Title</label><input id="adminTitle" placeholder="Product title" /></div>
+            <div class="field"><label class="small">Price (UGX)</label><input id="adminPrice" placeholder="12000" /></div>
+            <div class="field"><label class="small">Description</label><input id="adminDesc" placeholder="Short description" /></div>
+            <div class="field"><label class="small">Image URL</label><input id="adminImg" placeholder="https://..." /></div>
+            <div class="field"><label class="small">Or upload image (photo / screenshot)</label><input id="adminFile" type="file" accept="image/*" /></div>
+            <div class="field" style="display:flex;align-items:center;gap:12px"><div style="font-size:13px;color:var(--muted)">Preview</div><img id="adminImgPreview" src="" alt="preview" style="width:80px;height:60px;object-fit:cover;border-radius:6px;display:none"/></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px">
+                <button id="adminAdd" class="btn">Add Product</button>
+            </div>
+
+            <h4 style="margin:8px 0">Uploaded Products</h4>
+            <div id="adminSavedList" style="display:block"></div>
+        </div>
+    </aside>
+    <script>
+        // WhatsApp number (international, no plus sign)
+        const WHATSAPP_NUMBER = "256775157311";
+
+        // Base product catalog (default products)
+        const baseProducts = [
+            {id: 'p1', title: 'Premium Coffee Beans 1kg', price: 18.50, desc: 'Roasted medium, fresh.', img: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=83ef5cd88db285b6fae7a6d7c1a6a2e1'},
+            {id: 'p2', title: 'Organic Tea Pack (50g)', price: 6.25, desc: 'Hand-picked leaves.', img: 'https://images.unsplash.com/photo-1514361892637-3a3e3b4a7f63?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=0b7d5b4b79c3cc1e47218f8f7a8a71b3'},
+            {id: 'p3', title: 'Handmade Soap (3 pcs)', price: 9.00, desc: 'Natural oils & scent.', img: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=2d09b64c4f9e210c2f9c6a1c6343b5f1'},
+            {id: 'p4', title: 'Local Honey 500g', price: 12.75, desc: 'Raw and pure.', img: 'https://images.unsplash.com/photo-1514995669114-17b8d8d3c2f1?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=4f45394f3a6c5f7c1f3d4b8a8c6f7651'}
+        ];
+
+        // Admin-added products saved in localStorage under this key
+        const STORAGE_PRODUCTS_KEY = 'gg_products';
+        let savedProducts = JSON.parse(localStorage.getItem(STORAGE_PRODUCTS_KEY) || '[]');
+
+        // Working products array is base + saved
+        let products = baseProducts.concat(savedProducts);
+
+        // Cart state stored in localStorage
+        let cart = JSON.parse(localStorage.getItem('gg_cart')||'{}');
+
+        const productGrid = document.getElementById('productGrid');
+        const cartCount = document.getElementById('cartCount');
+        const openCartBtn = document.getElementById('openCart');
+        const cartSidebar = document.getElementById('cartSidebar');
+        const closeCartBtn = document.getElementById('closeCart');
+        const cartItemsEl = document.getElementById('cartItems');
+        const cartEmpty = document.getElementById('cartEmpty');
+        const cartTotalEl = document.getElementById('cartTotal');
+        const checkoutBtn = document.getElementById('checkout');
+        const searchInput = document.getElementById('search');
+
+        function formatPrice(n){
+            // Display as Ugandan Shillings (UGX) with thousand separators, no decimals
+            try{
+                const value = Math.round(Number(n) || 0);
+                return 'UGX ' + new Intl.NumberFormat('en-UG', {maximumFractionDigits:0}).format(value);
+            }catch(e){
+                return 'UGX ' + (n||0);
+            }
+        }
+
+        function renderProducts(list = products){
+            productGrid.innerHTML = '';
+            list.forEach(p=>{
+                const card = document.createElement('div'); card.className='card';
+                card.innerHTML = `
+                    <img src="${p.img}" alt="${p.title}" />
+                    <h3>${p.title}</h3>
+                    <div class="meta">${p.desc}</div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+                        <div class="price">${formatPrice(p.price)}</div>
+                        <div>
+                            <button class="btn" onclick="addToCart('${p.id}')">Add</button>
+                        </div>
+                    </div>
+                `;
+                productGrid.appendChild(card);
+            })
+        }
+
+        function saveCart(){localStorage.setItem('gg_cart', JSON.stringify(cart));}
+
+        function addToCart(id){
+            cart[id] = (cart[id]||0) + 1;
+            saveCart();
+            updateCartUI();
+        }
+
+        function removeFromCart(id){
+            delete cart[id];
+            saveCart();
+            updateCartUI();
+        }
+
+        function setQty(id, qty){
+            qty = Number(qty) || 0;
+            if(qty <= 0) removeFromCart(id);
+            else {cart[id] = qty; saveCart();}
+            updateCartUI();
+        }
+
+        function updateCartUI(){
+            const ids = Object.keys(cart);
+            const totalCount = ids.reduce((s,id)=>s+cart[id],0);
+            if(totalCount>0){cartCount.style.display='flex';cartCount.textContent=totalCount}else{cartCount.style.display='none'}
+
+            cartItemsEl.innerHTML = '';
+            if(ids.length===0){cartEmpty.style.display='block';cartItemsEl.style.display='none';cartTotalEl.textContent = formatPrice(0);return}
+            cartEmpty.style.display='none';cartItemsEl.style.display='block';
+
+            let total = 0;
+            ids.forEach(id=>{
+                const p = products.find(x=>x.id===id);
+                if(!p) return;
+                const qty = cart[id];
+                total += p.price * qty;
+
+                const item = document.createElement('div'); item.className='cart-item';
+                item.innerHTML = `
+                    <img src="${p.img}" alt="${p.title}" />
+                    <div style="flex:1">
+                        <div style="display:flex;justify-content:space-between;align-items:start">
+                            <div>
+                                <div style="font-weight:600">${p.title}</div>
+                                <div class="small">${formatPrice(p.price)} each</div>
+                            </div>
+                            <div style="text-align:right">
+                                <div class="small">${formatPrice(p.price*qty)}</div>
+                                <button style="background:none;border:none;color:#d00;cursor:pointer;margin-top:6px" onclick="removeFromCart('${id}')">Remove</button>
+                            </div>
+                        </div>
+                        <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+                            <div class="qty small">
+                                <button class="btn secondary" style="padding:6px 8px" onclick="setQty('${id}', ${qty}-1)">-</button>
+                                <input style="width:44px;text-align:center;padding:6px;border-radius:6px;border:1px solid #e6eefb" value="${qty}" onchange="setQty('${id}', this.value)" />
+                                <button class="btn" style="padding:6px 8px" onclick="setQty('${id}', ${qty}+1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                cartItemsEl.appendChild(item);
+            })
+            cartTotalEl.textContent = formatPrice(total);
+        }
+
+        // Checkout: compose message and open WhatsApp
+        function checkout(){
+            const ids = Object.keys(cart);
+            if(ids.length===0){alert('Your cart is empty.');return}
+            const name = document.getElementById('customerName').value.trim();
+            const address = document.getElementById('customerAddress').value.trim();
+            let messageLines = [];
+            messageLines.push('Order from Goodie Goodie');
+            if(name) messageLines.push('Name: ' + name);
+            if(address) messageLines.push('Address: ' + address);
+            messageLines.push('');
+            messageLines.push('Items:');
+            let total = 0;
+            ids.forEach(id=>{
+                const p = products.find(x=>x.id===id);
+                const qty = cart[id];
+                total += p.price * qty;
+                messageLines.push(`${qty} x ${p.title} - ${formatPrice(p.price)} each`);
+            });
+            messageLines.push('');
+            messageLines.push('Total: ' + formatPrice(total));
+            messageLines.push('Please confirm availability and delivery.');
+
+            const message = encodeURIComponent(messageLines.join('\n'));
+            const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
+            window.open(url, '_blank');
+        }
+
+        // UI hooks
+        openCartBtn.addEventListener('click', ()=>{cartSidebar.classList.add('open');cartSidebar.setAttribute('aria-hidden','false')});
+        closeCartBtn.addEventListener('click', ()=>{cartSidebar.classList.remove('open');cartSidebar.setAttribute('aria-hidden','true')});
+        checkoutBtn.addEventListener('click', checkout);
+        searchInput.addEventListener('input', ()=>{
+            const q = searchInput.value.trim().toLowerCase();
+            renderProducts(products.filter(p=>p.title.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q)));
+        });
+
+        // Expose some functions for inline onclicks
+        window.addToCart = addToCart;
+        window.removeFromCart = removeFromCart;
+        window.setQty = setQty;
+
+        // Init
+        renderProducts();
+        updateCartUI();
+        
+        // ------------------ Admin features ------------------
+        const ADMIN_PASS = '159951';
+        const adminBtn = document.createElement('button');
+        adminBtn.textContent = 'Admin';
+        adminBtn.className = 'btn secondary';
+        adminBtn.style.marginLeft = '8px';
+        // Add admin button to toolbar
+        document.querySelector('.toolbar').appendChild(adminBtn);
+
+        const adminModal = document.getElementById('adminModal');
+        const adminPassword = document.getElementById('adminPassword');
+        const adminLoginBtn = document.getElementById('adminLogin');
+        const adminCancel = document.getElementById('adminCancel');
+        const adminSidebar = document.getElementById('adminSidebar');
+        const adminAdd = document.getElementById('adminAdd');
+        const adminTitle = document.getElementById('adminTitle');
+        const adminPrice = document.getElementById('adminPrice');
+        const adminDesc = document.getElementById('adminDesc');
+        const adminImg = document.getElementById('adminImg');
+        const adminFile = document.getElementById('adminFile');
+        const adminImgPreview = document.getElementById('adminImgPreview');
+        const adminSavedList = document.getElementById('adminSavedList');
+        const adminLogout = document.getElementById('adminLogout');
+        const closeAdmin = document.getElementById('closeAdmin');
+
+        function openAdminModal(){ adminModal.style.display='flex'; adminPassword.value=''; adminPassword.focus(); }
+        function closeAdminModal(){ adminModal.style.display='none'; }
+
+        function openAdminSidebar(){ adminSidebar.style.transform='translateX(0)'; adminSidebar.setAttribute('aria-hidden','false'); renderAdminSaved(); }
+        function closeAdminSidebar(){ adminSidebar.style.transform='translateX(-110%)'; adminSidebar.setAttribute('aria-hidden','true'); }
+
+        function renderAdminSaved(){
+            savedProducts = JSON.parse(localStorage.getItem(STORAGE_PRODUCTS_KEY) || '[]');
+            adminSavedList.innerHTML = '';
+            if(savedProducts.length===0){ adminSavedList.innerHTML = '<div class="empty">No uploaded products yet.</div>'; return }
+            savedProducts.forEach(p=>{
+                const row = document.createElement('div');
+                row.style.display='flex'; row.style.gap='8px'; row.style.alignItems='center'; row.style.padding='8px 0'; row.style.borderBottom='1px solid #eef2f7';
+                row.innerHTML = `<img src="${p.img||''}" style="width:56px;height:56px;object-fit:cover;border-radius:6px" />`;
+                const info = document.createElement('div'); info.style.flex='1'; info.innerHTML = `<div style="font-weight:600">${p.title}</div><div class="small">${formatPrice(p.price)}</div>`;
+                const del = document.createElement('button'); del.className='btn secondary'; del.textContent='Delete'; del.onclick = ()=>{ if(confirm('Delete this product?')) deleteSavedProduct(p.id) };
+                row.appendChild(info); row.appendChild(del);
+                adminSavedList.appendChild(row);
+            })
+        }
+
+        function persistSaved(){ localStorage.setItem(STORAGE_PRODUCTS_KEY, JSON.stringify(savedProducts)); products = baseProducts.concat(savedProducts); renderProducts(); updateCartUI(); }
+
+        function deleteSavedProduct(id){ savedProducts = savedProducts.filter(x=>x.id!==id); persistSaved(); renderAdminSaved(); }
+
+        function createAndPersistProduct(imgSrc){
+            const title = adminTitle.value.trim();
+            const price = Number(adminPrice.value) || 0;
+            const desc = adminDesc.value.trim();
+            const img = imgSrc || adminImg.value.trim() || 'https://via.placeholder.com/400x300?text=Product';
+            if(!title || price<=0){ alert('Please provide valid title and price.'); return }
+            const id = 's' + Date.now();
+            const p = {id, title, price, desc, img};
+            savedProducts.push(p);
+            persistSaved();
+            adminTitle.value=''; adminPrice.value=''; adminDesc.value=''; adminImg.value=''; adminFile.value=''; adminImgPreview.style.display='none'; adminImgPreview.src='';
+            renderAdminSaved();
+            alert('Product added.');
+        }
+
+        function addAdminProduct(){
+            // If a file is selected, read it as data URL first
+            if(adminFile && adminFile.files && adminFile.files.length>0){
+                const file = adminFile.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e){
+                    const dataUrl = e.target.result;
+                    createAndPersistProduct(dataUrl);
+                };
+                reader.onerror = function(){ alert('Failed to read image file.'); };
+                reader.readAsDataURL(file);
+            } else {
+                // No file selected; use image URL field (or placeholder)
+                createAndPersistProduct(null);
+            }
+        }
+
+        // Preview uploaded file when selected
+        if(adminFile){
+            adminFile.addEventListener('change', ()=>{
+                const f = adminFile.files && adminFile.files[0];
+                if(!f){ adminImgPreview.style.display='none'; adminImgPreview.src=''; return }
+                const r = new FileReader();
+                r.onload = (ev)=>{ adminImgPreview.src = ev.target.result; adminImgPreview.style.display='block'; };
+                r.readAsDataURL(f);
+            });
+        }
+
+        function attemptAdminLogin(){
+            const pw = adminPassword.value || '';
+            if(pw === ADMIN_PASS){ closeAdminModal(); openAdminSidebar(); localStorage.setItem('gg_admin_auth','1'); }
+            else { alert('Incorrect password.'); }
+        }
+
+        function adminLogoutFn(){ localStorage.removeItem('gg_admin_auth'); closeAdminSidebar(); }
+
+        // Hook events
+        adminBtn.addEventListener('click', openAdminModal);
+        adminCancel.addEventListener('click', closeAdminModal);
+        adminLoginBtn.addEventListener('click', attemptAdminLogin);
+        adminPassword.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') attemptAdminLogin(); });
+        adminAdd.addEventListener('click', addAdminProduct);
+        adminLogout.addEventListener('click', adminLogoutFn);
+        closeAdmin.addEventListener('click', closeAdminSidebar);
+
+        // Auto-open admin if previously authenticated (client-side)
+        if(localStorage.getItem('gg_admin_auth') === '1'){
+            openAdminSidebar();
+        }
+    </script>
+</body>
+</html>
